@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper BG • Транскрибиране на аудио на български език</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" x2="12" y1="19" y2="22"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Whisper BG Transcriber</h1>
+                    <p class="subtitle">Интелигентно преобразуване на говор в текст на български език с OpenAI Whisper</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <div id="hardware-badge" class="badge badge-hardware" title="Открит хардуер за ускорение">
+                    <span class="hardware-dot"></span>
+                    <span id="hardware-text">Откриване на хардуер...</span>
+                </div>
+                <span class="badge badge-local">🔒 100% Локално</span>
+                <span class="badge badge-lang">🇧🇬 Български</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- СЕКЦИЯ 1: КАЧВАНЕ НА ФАЙЛ -->
+            <section class="card upload-card">
+                <div class="section-title">
+                    <span class="step-num">1</span>
+                    <h2>Изберете аудио или видео файл</h2>
+                </div>
+
+                <div id="drop-zone" class="drop-zone">
+                    <input type="file" id="file-input" accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.mp4,.mkv,.webm" hidden>
+                    <div class="drop-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" x2="12" y1="3" y2="15"/>
+                        </svg>
+                    </div>
+                    <h3>Провлачете аудио файл тук или кликнете за избор</h3>
+                    <p class="formats-hint">Поддържани формати: MP3, WAV, M4A, FLAC, OGG, AAC, MP4, MKV, WEBM</p>
+                </div>
+
+                <!-- ДИРЕКТЕН ЛИНК ОТ YOUTUBE / ВИДЕО ПЛАТФОРМА -->
+                <div id="youtube-url-container" class="youtube-url-container">
+                    <div class="youtube-divider">
+                        <span>или поставете директен линк от <strong>YouTube</strong> (Shorts, Facebook, TikTok, Vimeo)</span>
+                    </div>
+                    <div class="youtube-input-row">
+                        <input type="url" id="youtube-url-input" class="text-input" placeholder="https://www.youtube.com/watch?v=... или https://youtu.be/...">
+                        <button type="button" id="youtube-fetch-btn" class="btn btn-secondary btn-youtube">
+                            <span>📺 Извлечи от YouTube</span>
+                        </button>
+                    </div>
+                    <div id="youtube-fetch-status" class="gemini-test-status hidden"></div>
+                </div>
+
+                <!-- ИНФО ЗА ИЗБРАНИЯ ФАЙЛ И АУДИО ПЛЕЪР -->
+                <div id="file-info-container" class="file-info-container hidden">
+                    <div class="file-meta">
+                        <div class="file-meta-icon">🎵</div>
+                        <div class="file-meta-details">
+                            <div id="filename-display" class="file-title">име-на-файла.mp3</div>
+                            <div class="file-meta-sub">
+                                <span id="filesize-display">0 MB</span> • 
+                                <span id="duration-display">00:00 мин.</span>
+                            </div>
+                        </div>
+                        <button id="remove-file-btn" class="btn-icon" title="Премахни файла">✕</button>
+                    </div>
+                    <audio id="audio-preview" controls class="audio-player"></audio>
+                </div>
+            </section>
+
+            <!-- СЕКЦИЯ 2: НАСТРОЙКИ НА МОДЕЛА -->
+            <section class="card settings-card">
+                <div class="section-title">
+                    <span class="step-num">2</span>
+                    <h2>Настройки за транскрипцията</h2>
+                </div>
+
+                <div class="settings-grid">
+                    <!-- ИЗБОР НА МОДЕЛ -->
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            Избор на Whisper модел:
+                            <span class="info-tooltip" title="Large-v3 има цели 32 декодерни слоя (за разлика от 4 при Turbo) и разбира най-сложния български синтаксис.">ℹ️</span>
+                        </label>
+                        <div class="model-selector">
+                            <label class="radio-card">
+                                <input type="radio" name="whisper_model" value="large-v3-turbo" checked>
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Large-v3 Turbo</strong>
+                                        <span class="tag tag-speed">Препоръчителен ⚡</span>
+                                    </div>
+                                    <p>Оптимизиран за DirectML (AMD/Intel GPU) и CPU. Висока точност и максимална скорост.</p>
+                                </div>
+                            </label>
+
+                            <label class="radio-card">
+                                <input type="radio" name="whisper_model" value="large-v3">
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Whisper Large-v3</strong>
+                                        <span class="tag tag-accuracy">Пълен модел (32 слоя) 🏆</span>
+                                    </div>
+                                    <p>Максимална езикова дълбочина, най-богат български речник (изисква повече памет).</p>
+                                </div>
+                            </label>
+
+                            <label class="radio-card">
+                                <input type="radio" name="whisper_model" value="medium">
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Whisper Medium</strong>
+                                        <span class="tag tag-speed">Класически (~1.5 GB)</span>
+                                    </div>
+                                    <p>Стандартен модел v1 (2022 г.).</p>
+                                </div>
+                            </label>
+
+                            <label class="radio-card">
+                                <input type="radio" name="whisper_model" value="small">
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Whisper Small</strong>
+                                        <span class="tag tag-speed">Лек (~460 MB)</span>
+                                    </div>
+                                    <p>Много бърз за ежедневни кратки бележки.</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ИЗБОР НА ХАРДУЕРЕН ЕНДЖИН -->
+                    <div class="setting-group">
+                        <label class="setting-label" for="engine-select">
+                            Хардуерно ускорение (Енджин):
+                            <span class="info-tooltip" title="Автоматично използва DirectML за AMD Radeon / Intel GPU или CUDA за NVIDIA. Можете да превключите и ръчно.">ℹ️</span>
+                        </label>
+                        <select id="engine-select" class="text-input select-engine">
+                            <option value="auto" selected>⚡ Автоматично откриване (Препоръчително)</option>
+                            <option value="directml">🟣 Microsoft DirectML (AMD Radeon / Intel / DirectX 12)</option>
+                            <option value="faster_whisper">🟢 Faster-Whisper (NVIDIA CUDA / Стандартен)</option>
+                            <option value="cpu">🟡 Процесор (CPU - само софтуерен режим)</option>
+                        </select>
+                        <p id="engine-hint" class="field-hint">💡 Зареждане на хардуерна информация...</p>
+                    </div>
+
+                    <!-- ОПЦИИ ЗА ТОЧНОСТ И ФОРМАТИРАНЕ -->
+                    <div class="setting-group options-row">
+                        <label class="checkbox-label" title="Нормализира динамиката на гласа и изрязва нискочестотния микрофонен тътен под 75 Hz">
+                            <input type="checkbox" id="preprocess-toggle" checked>
+                            <span>Аудио Pre-processing (Нормализация на звука + филтър за шум) 🎧</span>
+                        </label>
+                        <label class="checkbox-label" title="Оценява до 8 алтернативни думи едновременно с дълбоко изследване (Patience 2.0)">
+                            <input type="checkbox" id="beam-toggle" checked>
+                            <span>Разширен Beam Search (Дълбоко търсене: Beam 8, Patience 2.0) 🔍</span>
+                        </label>
+                        <label class="checkbox-label" title="Предотвратява натрупване на правописни грешки между съседни изречения">
+                            <input type="checkbox" id="isolate-toggle" checked>
+                            <span>Изолиране на изреченията (спира натрупването на грешки)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="timestamps-toggle">
+                            <span>Включи времеви маркери <code>[00:00 - 00:05]</code></span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="vad-toggle" checked>
+                            <span>Филтриране на тишина (Silero VAD)</span>
+                        </label>
+                        <label class="checkbox-label" title="Записва текста след Whisper и финалния текст след коректора в папка debug_diff/ за директно сравнение в KDiff3 или Meld">
+                            <input type="checkbox" id="debug-mode-toggle" checked>
+                            <span>Дебъг режим за <strong>KDiff3 / Meld</strong> (сравнява преди/след коректора) 🐛</span>
+                        </label>
+                    </div>
+
+                    <!-- ИЗБОР НА ЕЗИКОВ ПОСТ-ПРОЦЕСИНГ -->
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            Езикова корекция (Пост-процесинг):
+                            <span class="info-tooltip" title="Изберете между 100% локален коректор (безплатен, без API ключове), облачен модел Google Gemini, или суров текст.">ℹ️</span>
+                        </label>
+                        <div class="postprocess-selector">
+                            <label class="radio-card mini-radio-card">
+                                <input type="radio" name="postprocess_mode" value="local">
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Локален коректор (Ниво 3)</strong>
+                                        <span class="tag tag-accuracy">Правила 🔒</span>
+                                    </div>
+                                    <p>Бърз, лек и безплатен. Поправя членуване, запетаи, 'в/във', 'с/със' и изчиства русизми.</p>
+                                </div>
+                            </label>
+
+                            <label class="radio-card mini-radio-card">
+                                <input type="radio" name="postprocess_mode" value="qwen" checked>
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Локален AI (BgGPT / Qwen)</strong>
+                                        <span class="tag tag-speed">DirectML GPU ⚡</span>
+                                    </div>
+                                    <p>100% локален невронен модел (INSAIT BgGPT 2.6B/7B или Qwen 2.5) на видеокартата. Сваля се автоматично при първо пускане.</p>
+                                </div>
+                            </label>
+
+                            <label class="radio-card mini-radio-card">
+                                <input type="radio" name="postprocess_mode" value="gemini">
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Google Gemini AI</strong>
+                                        <span class="tag tag-speed">Облачен LLM ✨</span>
+                                    </div>
+                                    <p>Интелигентна редакция с невронния модел на Google през API ключ (или $GEMINI_API_KEY).</p>
+                                </div>
+                            </label>
+
+                            <label class="radio-card mini-radio-card">
+                                <input type="radio" name="postprocess_mode" value="none">
+                                <div class="radio-card-content">
+                                    <div class="radio-card-header">
+                                        <strong>Без корекция</strong>
+                                        <span class="tag tag-speed">Суров текст</span>
+                                    </div>
+                                    <p>Оставя транскрибирания текст точно както е чут от Whisper.</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- НАСТРОЙКИ ЗА ЛОКАЛЕН AI (BgGPT / Qwen DirectML) -->
+                    <div id="local-ai-config-box" class="gemini-config-box">
+                        <div class="gemini-config-header">
+                            <div class="gemini-config-title">
+                                <span class="gemini-sparkle">🇧🇬</span>
+                                <strong>Избор на локален AI модел (DirectML ONNX)</strong>
+                            </div>
+                            <span class="badge badge-local">Автоматично сваляне при първо поискване</span>
+                        </div>
+                        <div class="gemini-config-body">
+                            <div class="gemini-row">
+                                <label class="setting-sublabel" for="local-ai-model-select">Изберете модел за езикова корекция:</label>
+                                <select id="local-ai-model-select" class="text-input">
+                                    <optgroup label="🇧🇬 INSAIT BgGPT Gemma-2 2.6B (Най-нов и бърз за лаптоп)">
+                                        <option value="zealod/BgGPT-Gemma-2-2.6B-IT-v1.0-int4-onnx-directml" selected>⚡ BgGPT Gemma-2 2.6B • INT4 (2.51 GB • Препоръчителен, ~5.5 tok/s)</option>
+                                        <option value="zealod/BgGPT-Gemma-2-2.6B-IT-v1.0-hybrid-onnx-directml">🚀 BgGPT Gemma-2 2.6B • HYBRID INT4+FP16 (3.34 GB • 16-битова глава, ~2.8 tok/s)</option>
+                                        <option value="zealod/BgGPT-Gemma-2-2.6B-IT-v1.0-int8-onnx-directml">🎯 BgGPT Gemma-2 2.6B • INT8 (3.72 GB • Пълна 8-битова точност)</option>
+                                    </optgroup>
+                                    <optgroup label="🇧🇬 INSAIT BgGPT 7B Instruct v0.2 (Голям 7-милиарден модел)">
+                                        <option value="zealod/BgGPT-7B-Instruct-v0.2-hybrid-onnx-directml">⭐ BgGPT 7B Instruct v0.2 • HYBRID INT4+FP16 (4.37 GB • Най-балансиран 7B, ~2.3 tok/s)</option>
+                                        <option value="zealod/BgGPT-7B-Instruct-v0.2-int4-onnx-directml">🧠 BgGPT 7B Instruct v0.2 • INT4 (4.04 GB • Компактен 7B, ~2.5 tok/s)</option>
+                                        <option value="zealod/BgGPT-7B-Instruct-v0.2-int8-onnx-directml">💎 BgGPT 7B Instruct v0.2 • INT8 (7.36 GB • За мощни видеокарти с 8GB+ VRAM)</option>
+                                    </optgroup>
+                                    <optgroup label="🌐 Многоезични DirectML модели">
+                                        <option value="GamePlusPlus/Qwen2.5-7B-Instruct-int4-onnx-directml">🌐 Qwen 2.5 7B Instruct • INT4 (4.10 GB • Многоезичен модел)</option>
+                                    </optgroup>
+                                </select>
+                                <p class="field-hint">💡 Избраният модел ще се изтегли автоматично от Hugging Face в папка <code>models/</code> при първото му използване и след това ще работи 100% офлайн.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- НАСТРОЙКИ ЗА GOOGLE GEMINI (Показват се само при избран Gemini) -->
+                    <div id="gemini-config-box" class="gemini-config-box hidden">
+                        <div class="gemini-config-header">
+                            <div class="gemini-config-title">
+                                <span class="gemini-sparkle">✨</span>
+                                <strong>Настройки за Google Gemini</strong>
+                            </div>
+                            <span class="badge badge-lang">Cloud LLM</span>
+                        </div>
+
+                        <div class="gemini-config-body">
+                            <!-- Избор на източник за API ключ -->
+                            <div class="gemini-row">
+                                <label class="setting-sublabel">Източник на API ключ:</label>
+                                <div class="radio-inline-group">
+                                    <label class="radio-inline">
+                                        <input type="radio" name="gemini_key_source" value="input" checked>
+                                        <span>Въвеждане на ключ в полето</span>
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="gemini_key_source" value="env">
+                                        <span>От системна променлива (<code>GEMINI_API_KEY</code>)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Поле за ръчно въвеждане на ключ -->
+                            <div id="gemini-key-input-container" class="gemini-row">
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="gemini-api-key" class="text-input" placeholder="Поставете вашия Google Gemini API ключ тук (напр. AIzaSy...)">
+                                    <button type="button" id="toggle-key-visibility" class="btn-eye" title="Покажи/Скрий ключа">👁️</button>
+                                </div>
+                                <p class="field-hint">Ключът се съхранява само локално във вашия браузър. Можете да вземете безплатен ключ от Google AI Studio.</p>
+                            </div>
+
+                            <!-- Инфо съобщение за системна променлива -->
+                            <div id="gemini-env-info" class="gemini-row hidden">
+                                <p class="field-hint">💡 Приложението ще чете автоматично стойността на променливата <code>$env:GEMINI_API_KEY</code> от Windows.</p>
+                            </div>
+
+                            <!-- Бутон за зареждане на налични модели от Google API -->
+                            <div class="gemini-row gemini-fetch-row">
+                                <button type="button" id="fetch-gemini-models-btn" class="btn btn-secondary btn-fetch-models">
+                                    <span class="btn-icon">🔍</span>
+                                    <span>1. Провери и изтегли наличните модели от Google</span>
+                                </button>
+                                <span class="fetch-models-hint">Свързва се с Google и зарежда моделите, които са активни за вашия ключ в Google AI Studio.</span>
+                            </div>
+
+                            <!-- Избор на модел и тест бутон -->
+                            <div class="gemini-row-cols">
+                                <div class="gemini-col">
+                                    <label class="setting-sublabel" for="gemini-model-select">2. Изберете модел от списъка:</label>
+                                    <select id="gemini-model-select" class="text-input">
+                                        <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Препоръчителен • Най-нов и бърз)</option>
+                                        <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (Свръхбърз)</option>
+                                        <option value="gemini-4-argon">Gemini 4 Argon (Максимална прецизност)</option>
+                                    </select>
+                                </div>
+                                <div class="gemini-col gemini-test-col">
+                                    <label class="setting-sublabel">&nbsp;</label>
+                                    <button type="button" id="test-gemini-btn" class="btn btn-secondary" title="Тества избрания модел с кратък въпрос">
+                                        <span>⚡ 3. Тествай избрания</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Статус от теста -->
+                            <div id="gemini-test-status" class="gemini-test-status hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- ПЪРВОНАЧАЛЕН КОНТЕКСТ (PROMPT) -->
+                    <div class="setting-group">
+                        <label class="setting-label" for="prompt-input">
+                            Специфични думи, имена или термини (по избор):
+                            <span class="info-tooltip" title="Помага на модела да разпознава правилно специфични имена, фирми или термини, които се споменават в записа.">ℹ️</span>
+                        </label>
+                        <input type="text" id="prompt-input" class="text-input" 
+                               value="Това е аудиозапис на книжовен български език с правилен правопис, пълен и кратък член, препинателни знаци и запетаи."
+                               placeholder="напр. Иван Иванов, София, Пловдив, специфични термини...">
+                    </div>
+                </div>
+
+                <!-- БУТОН ЗА СТАРТ -->
+                <div class="action-footer">
+                    <button id="start-btn" class="btn btn-primary" disabled>
+                        <span class="btn-icon">⚡</span>
+                        <span>Стартирай транскрипцията</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- СЕКЦИЯ 3: ПРОГРЕС И РЕЗУЛТАТ -->
+            <section id="result-section" class="card result-card hidden">
+                <div class="section-title">
+                    <span class="step-num">3</span>
+                    <h2>Резултат от транскрипцията</h2>
+                    <div id="status-badge" class="status-badge badge-processing">Обработва се...</div>
+                </div>
+
+                <!-- ПРОГРЕС БАР -->
+                <div id="progress-container" class="progress-container">
+                    <div class="progress-header">
+                        <span id="progress-text">Инициализиране...</span>
+                        <span id="progress-pct">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- ДЕЙСТВИЯ ЗА СВАЛЯНЕ И КОПИРАНЕ -->
+                <div id="export-actions" class="export-actions hidden">
+                    <div class="export-buttons-group">
+                        <button id="download-docx-btn" class="btn btn-success" title="Свали като Word документ">
+                            <span>📄 Свали Word (.docx)</span>
+                        </button>
+                        <button id="download-txt-btn" class="btn btn-secondary" title="Свали като обикновен текст">
+                            <span>📝 Свали TXT (.txt)</span>
+                        </button>
+                        <button id="download-srt-btn" class="btn btn-secondary" title="Свали като субтитри">
+                            <span>🎬 Свали Субтитри (.srt)</span>
+                        </button>
+                    </div>
+
+                    <button id="copy-btn" class="btn btn-outline" title="Копирай в клипборда">
+                        <span>📋 Копирай целия текст</span>
+                    </button>
+                </div>
+
+                <!-- ДЕБЪГ ПАНЕЛ ЗА СРАВНЕНИЕ В KDIFF3 / MELD -->
+                <div id="debug-diff-panel" class="debug-diff-panel hidden">
+                    <div class="debug-diff-header">
+                        <div class="debug-diff-title">
+                            <span>🐛 <strong>Дебъг сравнение на коректора (KDiff3 / Meld)</strong></span>
+                            <span id="debug-model-badge" class="badge badge-local">AI Коректор</span>
+                        </div>
+                        <div class="debug-view-tabs">
+                            <button type="button" class="btn-tab active" data-view="final" title="Показва финалния текст след избрания AI модел">✨ 3. Финален (след AI модела)</button>
+                            <button type="button" class="btn-tab" data-view="rules" title="Показва какво прави само базовият bg_corrector с правила (за сравнение)">📏 2. Само bg_corrector (правила)</button>
+                            <button type="button" class="btn-tab" data-view="whisper" title="Показва суровия текст директно от Whisper (който се подава на AI модела)">🎙️ 1. След Whisper (суров вход към AI)</button>
+                        </div>
+                    </div>
+
+                    <div class="debug-diff-actions">
+                        <button type="button" id="launch-diff-2way-btn" class="btn btn-primary btn-sm" title="Отваря автоматично KDiff3, Meld или WinMerge със суровия Whisper текст срещу финалния текст след модела">
+                            <span>🚀 Отвори в KDiff3 / Meld (Whisper ↔ Финален)</span>
+                        </button>
+                        <button type="button" id="launch-diff-3way-btn" class="btn btn-secondary btn-sm" title="Отваря 3-лентово сравнение: 1. Whisper → 2. Правила → 3. Финален след AI модела">
+                            <span>🔬 3-Way Diff (Whisper ↔ Правила ↔ Модел)</span>
+                        </button>
+                        <button type="button" id="open-debug-folder-btn" class="btn btn-secondary btn-sm" title="Отваря локалната папка debug_diff във File Explorer">
+                            <span>📂 Отвори папката с файловете</span>
+                        </button>
+                        <button type="button" id="dl-debug-whisper-btn" class="btn btn-outline btn-sm" title="Свали 1_whisper_model.txt">
+                            <span>⬇️ 1_whisper.txt</span>
+                        </button>
+                        <button type="button" id="dl-debug-final-btn" class="btn btn-outline btn-sm" title="Свали 3_final_after_model.txt">
+                            <span>⬇️ 3_final.txt</span>
+                        </button>
+                    </div>
+
+                    <div class="debug-diff-path-row">
+                        <span class="debug-path-label">Файлове за KDiff3 / Meld:</span>
+                        <code id="debug-folder-path" class="debug-folder-code">debug_diff/</code>
+                        <button type="button" id="copy-debug-path-btn" class="btn-copy-mini" title="Копирай пътя до папката">📋 Копирай пътя</button>
+                    </div>
+                </div>
+
+                <!-- ТЕКСТОВО ПОЛЕ С ТРАНСКРИПЦИЯТА -->
+                <div class="result-box-wrapper">
+                    <div class="result-meta-bar">
+                        <span id="stats-device" class="stats-device">Хардуер: -</span> • 
+                        <span id="stats-words">Думи: 0</span> • 
+                        <span id="stats-chars">Символи: 0</span> • 
+                        <span id="stats-time">Време за обработка: -</span>
+                    </div>
+                    <div id="result-text-area" class="result-text-area" contenteditable="false" placeholder="Тук ще се появи транскрибираният текст..."></div>
+                </div>
+
+                <!-- СПИСЪК СЪС СЕГМЕНТИ И ВРЕМЕВИ ИНТЕРВАЛИ -->
+                <details id="segments-accordion" class="segments-accordion hidden">
+                    <summary>Разгледай интервали по секунди (кликни за превъртане)</summary>
+                    <div id="segments-list" class="segments-list"></div>
+                </details>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Задвижвано от <strong>OpenAI Whisper</strong> (Faster-Whisper CTranslate2 Engine) • Локална обработка без изпращане на данни в интернет</p>
+        </footer>
+    </div>
+
+    <!-- ТОСТ ИЗВЕСТИЯ -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

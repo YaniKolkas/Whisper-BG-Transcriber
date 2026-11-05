@@ -1,0 +1,43 @@
+# Байткод и кеш на Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Модели (теглят се автоматично от кода или huggingface - тежат гигабайти!)
+models/
+huggingface/
+*.onnx
+*.onnx_data
+*.bin
+*.pt
+
+# Папки от PyInstaller компилация
+build/
+dist/
+*.spec.bak
+
+# Потребителски качени файлове и временни резултати
+uploads/
+*.mp3
+*.wav
+*.mp4
+*.mkv
+*.m4a
+*.flac
+*.aac
+
+# Локални логове и тестови дифове
+*.log
+debug_diff/
+*.tmp
+
+# Системни и виртуални среди
+venv/
+env/
+.venv/
+.env
+
+# IDE настройки
+.vscode/
+.idea/

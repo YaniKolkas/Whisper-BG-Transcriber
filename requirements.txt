@@ -1,0 +1,10 @@
+faster-whisper>=1.0.0
+python-docx>=1.0.0
+fastapi>=0.110.0
+uvicorn>=0.28.0
+python-multipart>=0.0.9
+av>=11.0.0
+scipy>=1.11.0
+onnxruntime-directml>=1.20.0
+onnxruntime-genai-directml>=0.13.0
+onnx-asr>=0.12.0

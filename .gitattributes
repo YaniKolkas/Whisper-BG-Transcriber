@@ -1,0 +1,14 @@
+# Автоматично нормализиране на текстовите файлове
+* text=auto eol=lf
+
+# Windows партидни файлове задължително с CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Бинарни файлове
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.exe binary
+*.dll binary
